@@ -10,17 +10,26 @@ async function ensureTablesExist() {
       port: process.env.DB_PORT || process.env.MYSQLPORT
     });
 
-    // Create Users table
+    // Create Users table with phone column included
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(255) NOT NULL UNIQUE,
+        phone VARCHAR(50) NOT NULL UNIQUE,
+        username VARCHAR(255),
         password VARCHAR(255) NOT NULL,
         vip_level INT DEFAULT 0,
         withdrawal_enabled TINYINT(1) DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Safe fallback to ensure the phone column exists if the table was already there
+    try {
+      await connection.execute(`ALTER TABLE users ADD COLUMN phone VARCHAR(50) UNIQUE;`);
+      console.log('Successfully added "phone" column to users table.');
+    } catch (e) {
+      // Column already exists, safe to ignore
+    }
 
     // Create Transactions table
     await connection.execute(`
