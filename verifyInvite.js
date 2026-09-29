@@ -15,8 +15,10 @@ router.post('/verify-invite', async (req, res) => {
       });
     }
 
-    // Check if an active user owns this invite code on the platform
-    const referrer = await User.findOne({ inviteCode: inviteCode }); 
+    // Fixed for MySQL/Sequelize: wrapped inside a 'where' object
+    const referrer = await User.findOne({ 
+      where: { inviteCode: inviteCode } 
+    }); 
 
     if (!referrer) {
       return res.status(404).json({ 
