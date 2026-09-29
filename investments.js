@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 // Adjust the path to your database pool connection depending on your project setup
-const pool = require('../config/db'); 
+const pool = require('./db'); 
 
 // Middleware to authenticate user token
 const authenticateToken = require('../middleware/auth');

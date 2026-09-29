@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../config/db');
+const pool = require('./db');
 // Ensure your auth middleware path matches where you defined it
 const { authenticateUserToken } = require('../middleware/auth'); 
 

@@ -13,8 +13,8 @@ const fundRoutes = require('./fund');
 const bankCardRoutes = require('./bankcard'); // Added bankcard route module[cite: 5]
 // At the top of your server.js with other route imports:
 const { adminRouter } = require('./adminAuth');
-const setDeviceRoutes = require('./routes/deviceController');
-const withdrawalController = require('./routes/withdrawalController')
+const setDeviceRoutes = require('./deviceController');
+const withdrawalController = require('./withdrawalController')
 const initDeviceYieldCron = require('./deviceCron');
 const app = express();
 const server = http.createServer(app);
@@ -69,7 +69,7 @@ app.use('/api/bankcard', bankCardRoutes);
 app.use('/api', adminRouter);
 app.use('/api/devices', setDeviceRoutes(pool, authenticateToken));
 app.use('/api', withdrawalController(pool, authenticateToken, io));
-const teamCommissionRoutes = require('./routes/teamCommission');
+const teamCommissionRoutes = require('./teamCommission');
 app.use('/api/team-commission', teamCommissionRoutes);
 const JWT_SECRET = process.env.JWT_SECRET || 'pepsi_vip_secret_key_12345';
 

@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const db = require('../db'); // Your MySQL pool connection
+const db = require('./db'); // Your MySQL pool connection
 
 // Helper function to process the hourly +0.25 bonus for Level 0 users
 async function processLevelZeroHourlyBonus(userId) {
