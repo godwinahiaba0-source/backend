@@ -8,7 +8,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const multer = require('multer');
 const path = require('path');
-const pool = require('./config/db');
+const pool = require('./db');
 const fundRoutes = require('./fund');
 const bankCardRoutes = require('./bankcard'); // Added bankcard route module[cite: 5]
 // At the top of your server.js with other route imports:
