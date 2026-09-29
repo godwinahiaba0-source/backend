@@ -72,8 +72,8 @@ app.use('/api/devices', setDeviceRoutes(pool, authenticateToken));
 app.use('/api', withdrawalController(pool, authenticateToken, io));
 const teamCommissionRoutes = require('./teamCommission');
 app.use('/api/team-commission', teamCommissionRoutes);
-const verifyInviteRoute = require('./verifyInvite'); // Or whatever path matches your root/folder setup
-app.use('/api/auth', verifyInviteRoute);
+const verifyInviteRoutes = require('./verifyInvite');
+app.use('/api/auth', verifyInviteRoutes(pool));
 const JWT_SECRET = process.env.JWT_SECRET || 'pepsi_vip_secret_key_12345';
 
 // Helper for UTC Date String (UTC+0)[cite: 5]
