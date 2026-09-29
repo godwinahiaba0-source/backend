@@ -540,7 +540,7 @@ app.post('/api/auth/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await pool.query(
-      'INSERT INTO users (phone, password, balance, referred_by, status) VALUES (?, ?, ?, ?, "active")',
+      'INSERT INTO users (phone, password, status) VALUES (?, ?, ?, ?, "active")',
       [phone, hashedPassword, 0.00, referredBy || null]
     );
 
