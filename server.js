@@ -539,9 +539,12 @@ app.post('/api/auth/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [result] = await pool.query(
-  'INSERT INTO users (phone, password, status) VALUES (?, ?, ?)',
-  [phone, hashedPassword, 'active']
+    // Grab a username or generate one from the phone number
+const username = req.body.username || `user_${phone.slice(-4)}`;
+
+const [result] = await pool.query(
+  'INSERT INTO users (username, phone, password, status) VALUES (?, ?, ?, ?)',
+  [username, phone, hashedPassword, 'active']
 );
 
     const token = jwt.encode({ id: result.insertId, phone }, JWT_SECRET);
