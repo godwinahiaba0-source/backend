@@ -17,6 +17,7 @@ const { adminRouter } = require('./adminAuth');
 const setDeviceRoutes = require('./deviceController');
 const withdrawalController = require('./withdrawalController')
 const initDeviceYieldCron = require('./deviceCron');
+const teamRoutes = require('./teamRoutes');
 const app = express();
 const server = http.createServer(app);
 
@@ -74,6 +75,8 @@ const teamCommissionRoutes = require('./teamCommission');
 app.use('/api/team-commission', teamCommissionRoutes);
 const verifyInviteRoutes = require('./verifyInvite');
 app.use('/api/auth', verifyInviteRoutes(pool));
+app.use('/api', teamRoutes);
+
 const JWT_SECRET = process.env.JWT_SECRET || 'pepsi_vip_secret_key_12345';
 
 // Helper for UTC Date String (UTC+0)[cite: 5]
