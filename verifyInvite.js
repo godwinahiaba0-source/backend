@@ -7,6 +7,19 @@ module.exports = function(pool) {
     try {
       const { inviteCode } = req.body;
 
+      // 1. Check if there are ANY users in the database yet
+      const [allUsers] = await pool.query('SELECT COUNT(*) as count FROM users');
+      const userCount = allUsers[0].count;
+
+      // If you are the very first user on the platform, bypass the invite check!
+      if (userCount === 0) {
+        return res.status(200).json({ 
+          success: true, 
+          message: 'First user bypass: Invite code accepted.' 
+        });
+      }
+
+      // 2. Standard check for later users: Code is required
       if (!inviteCode) {
         return res.status(400).json({ 
           success: false, 
@@ -14,14 +27,13 @@ module.exports = function(pool) {
         });
       }
 
-      // Check if the code exists in the database
-      const [rows] = await pool.query('SELECT * FROM users WHERE referral_code = ?', [inviteCode]);
+      // 3. Check if the code belongs to an active user
+      const [rows] = await pool.query('SELECT * FROM users WHERE inviteCode = ?', [inviteCode]);
 
-      // If not found in the DB, accept it anyway so registration isn't blocked
       if (!rows || rows.length === 0) {
-        return res.status(200).json({ 
-          success: true, 
-          message: 'Invitation code accepted.' 
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Invalid invitation code. This code does not belong to any active user.' 
         });
       }
 
