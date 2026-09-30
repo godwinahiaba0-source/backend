@@ -42,7 +42,7 @@ router.post('/auth/register', async (req, res) => {
   }
 });
 
-// 2. User Login Route (/api/auth/login) - Returns full token and session keys
+// 2. User Login Route (/api/auth/login) - Returns all common token and session formats
 router.post('/auth/login', async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -65,27 +65,32 @@ router.post('/auth/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid phone or password.' });
     }
 
-    // Generate a session token
-    const tokenValue = 'token_' + user.phone + '_' + Date.now();
+    const tokenValue = 'bearer_' + user.phone + '_' + Date.now();
 
-    // Return multiple formats to match whatever your frontend script looks for
+    // Return every possible format frontend templates check for
     return res.status(200).json({
       success: true,
+      status: 'success',
       message: 'Login successful',
       token: tokenValue,
       access_token: tokenValue,
+      authToken: tokenValue,
+      sessionId: tokenValue,
+      loggedIn: true,
+      user: {
+        id: user.id || user.phone,
+        username: user.username,
+        phone: user.phone,
+        referral_code: user.referral_code
+      },
       data: {
         token: tokenValue,
+        access_token: tokenValue,
         user: {
           username: user.username,
           phone: user.phone,
           referral_code: user.referral_code
         }
-      },
-      user: {
-        username: user.username,
-        phone: user.phone,
-        referral_code: user.referral_code
       }
     });
 
