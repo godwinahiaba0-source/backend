@@ -42,7 +42,7 @@ router.post('/auth/register', async (req, res) => {
   }
 });
 
-// 2. User Login Route (/api/auth/login) - Checks MySQL and logs user in
+// 2. User Login Route (/api/auth/login) - Returns token and user session data
 router.post('/auth/login', async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -65,10 +65,11 @@ router.post('/auth/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid phone or password.' });
     }
 
-    // Login successful
+    // Login successful - send token and user info so frontend stays logged in
     return res.status(200).json({
       success: true,
       message: 'Login successful',
+      token: 'mock-session-token-' + user.phone, // Provides a token for frontend storage
       user: {
         username: user.username,
         phone: user.phone,
@@ -81,7 +82,6 @@ router.post('/auth/login', async (req, res) => {
     res.status(500).json({ success: false, error: 'Server error during login' });
   }
 });
-
 // 3. Verify Invite Code Route (/api/auth/verify-invite) - Safe Database Check
 router.post('/auth/verify-invite', async (req, res) => {
   try {
