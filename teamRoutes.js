@@ -134,17 +134,30 @@ router.post('/auth/verify-invite', async (req, res) => {
   }
 });
 
-// 4. Get Current User Profile Route (/api/auth/me)
+// 4. Get Current User Profile Route (/api/auth/me) - Returns the actual logged-in user
 router.get('/auth/me', async (req, res) => {
   try {
-    const userData = req.user || {
-      username: 'Jnr Sinny',
-      referral_code: '849201'
-    };
-    res.json({ user: userData });
+    // Check if phone or token is passed via headers or query parameters from frontend storage
+    const userPhone = req.headers['x-user-phone'] || req.query.phone;
+
+    if (!userPhone) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+
+    const [rows] = await db.query('SELECT username, phone, referral_code, invited_by FROM users WHERE phone = ?', [userPhone]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    return res.json({ 
+      success: true, 
+      user: rows[0] 
+    });
+
   } catch (err) {
     console.error("Auth me error:", err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
