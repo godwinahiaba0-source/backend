@@ -37,7 +37,19 @@ async function runFix() {
       }
     }
 
-    // 1c. Fix withdrawals table created_at to DATETIME so it stores exact times instead of 00:00:00
+    // 1c. Ensure users table has balance column
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN balance DECIMAL(10,2) DEFAULT 0.00`);
+      console.log('✔ Added balance column to users table.');
+    } catch (e) {
+      if (e.code === 'ER_DUP_FIELDNAME') {
+        console.log('ℹ balance column already exists in users table.');
+      } else {
+        console.warn('Note on balance column modification:', e.message);
+      }
+    }
+
+    // 1d. Fix withdrawals table created_at to DATETIME so it stores exact times instead of 00:00:00
     try {
       await connection.query(`ALTER TABLE withdrawals MODIFY COLUMN created_at DATETIME`);
       console.log('✔ Successfully updated withdrawals.created_at to DATETIME.');
@@ -92,6 +104,18 @@ async function runFix() {
     } catch (e) {
       if (e.code === 'ER_DUP_FIELDNAME') {
         console.log('ℹ last_yield_at column already exists in user_devices.');
+      } else {
+        throw e;
+      }
+    }
+
+    // 5b. Safely add lv0_credits_count column to user_devices
+    try {
+      await connection.query(`ALTER TABLE user_devices ADD COLUMN lv0_credits_count DECIMAL(10,2) DEFAULT 0.00`);
+      console.log('✔ Added lv0_credits_count column to user_devices.');
+    } catch (e) {
+      if (e.code === 'ER_DUP_FIELDNAME') {
+        console.log('ℹ lv0_credits_count column already exists in user_devices.');
       } else {
         throw e;
       }
