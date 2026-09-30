@@ -42,7 +42,7 @@ router.post('/auth/register', async (req, res) => {
   }
 });
 
-// 2. User Login Route (/api/auth/login) - Returns token and user session data
+// 2. User Login Route (/api/auth/login) - Returns full token and session keys
 router.post('/auth/login', async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -65,11 +65,23 @@ router.post('/auth/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid phone or password.' });
     }
 
-    // Login successful - send token and user info so frontend stays logged in
+    // Generate a session token
+    const tokenValue = 'token_' + user.phone + '_' + Date.now();
+
+    // Return multiple formats to match whatever your frontend script looks for
     return res.status(200).json({
       success: true,
       message: 'Login successful',
-      token: 'mock-session-token-' + user.phone, // Provides a token for frontend storage
+      token: tokenValue,
+      access_token: tokenValue,
+      data: {
+        token: tokenValue,
+        user: {
+          username: user.username,
+          phone: user.phone,
+          referral_code: user.referral_code
+        }
+      },
       user: {
         username: user.username,
         phone: user.phone,
