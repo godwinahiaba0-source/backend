@@ -927,13 +927,13 @@ app.get('/api/accounting', authenticateToken, async (req, res) => {
           title = 'Device Purchase';
           break;
         case 'fund_investment':
-          title = 'Wealth Fund Investment';
+          title = 'Wealth Fund Deposit';
           break;
         case 'admin_credit':
           title = 'Rewards';
           break;
         case 'device_income':
-          title = 'Device hourly Income';
+          title = 'Device income';
           break;
         case 'referral_rebate':
           title = 'Referral Rebate';
