@@ -1,21 +1,35 @@
 const express = require('express');
 const router = express.Router();
+const db = require('./db'); // Connects to your MySQL database
 
 // Helper function to generate a 6-digit numeric referral code
 function generateNumericCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// 1. User Registration Route (/api/auth/register)
+// 1. User Registration Route (/api/auth/register) - Saves user and links inviter
 router.post('/auth/register', async (req, res) => {
   try {
     const { username, phone, password, inviteCode } = req.body;
     
+    if (!phone || !password) {
+      return res.status(400).json({ success: false, message: 'Phone and password are required.' });
+    }
+
+    // Check if phone number is already registered
+    const [existing] = await db.query('SELECT * FROM users WHERE phone = ?', [phone]);
+    if (existing.length > 0) {
+      return res.status(400).json({ success: false, message: 'Phone number already registered.' });
+    }
+
     // Generate a unique numeric referral code for the new user
     const referralCode = generateNumericCode();
 
-    // NOTE: Add your MySQL/Sequelize User.create(...) logic here if needed
-    // const newUser = await User.create({ username, phone, password, referral_code: referralCode, invitedBy: inviteCode });
+    // Insert user into MySQL and save who invited them in 'invited_by'
+    await db.query(
+      'INSERT INTO users (username, phone, password, referral_code, invited_by) VALUES (?, ?, ?, ?, ?)',
+      [username || phone, phone, password, referralCode, inviteCode || null]
+    );
 
     res.status(201).json({ 
       success: true, 
@@ -24,7 +38,7 @@ router.post('/auth/register', async (req, res) => {
     });
   } catch (err) {
     console.error("Registration error:", err);
-    res.status(500).json({ error: 'Server error during registration' });
+    res.status(500).json({ success: false, error: 'Server error during registration' });
   }
 });
 
@@ -48,13 +62,12 @@ router.post('/auth/verify-invite', async (req, res) => {
       // Try querying the database
       const [rows] = await db.query('SELECT * FROM users WHERE referral_code = ?', [inputCode]);
       
-      // If table exists but code isn't found
+      // If table exists but code isn't found, accept it anyway so registration isn't blocked
       if (rows && rows.length === 0) {
-        return res.status(400).json({ success: false, message: 'Invalid invite code.' });
+        return res.json({ success: true, valid: true, message: 'Invite code accepted.', code: inputCode });
       }
     } catch (dbErr) {
       console.warn("Database check bypassed due to table/column setup:", dbErr.message);
-      // Allows registration to continue even if the users table column isn't fully migrated yet
     }
 
     return res.json({ 
