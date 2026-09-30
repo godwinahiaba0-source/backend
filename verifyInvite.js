@@ -27,8 +27,8 @@ module.exports = function(pool) {
         });
       }
 
-      // 3. Check if the code belongs to an active user
-      const [rows] = await pool.query('SELECT * FROM users WHERE inviteCode = ?', [inviteCode]);
+      // 3. Check if the code belongs to an active user (using correct column name: referral_code)
+      const [rows] = await pool.query('SELECT * FROM users WHERE referral_code = ?', [inviteCode]);
 
       if (!rows || rows.length === 0) {
         return res.status(404).json({ 
