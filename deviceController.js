@@ -39,10 +39,21 @@ function setDeviceRoutes(pool, authenticateToken) {
         return res.status(404).json({ success: false, message: 'User or Device not found.' });
       }
 
+      // 2. CHECK IF USER ALREADY OWNS THIS ACTIVE DEVICE (Prevent duplicates)
+      const [existingDevice] = await connection.query(
+        `SELECT id FROM user_devices WHERE user_id = ? AND device_id = ? AND status = 'ACTIVE'`,
+        [userId, device_id]
+      );
+
+      if (existingDevice.length > 0) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: 'You already own an active instance of this device!' });
+      }
+
       const devicePrice = parseFloat(device.price);
       const buyerVipLevel = parseInt(user.vip_level || 0, 10);
 
-      // 2. CHECK DOWNLINE REQUIREMENTS FOR VIP LEVELS 4 THROUGH 10
+      // 3. CHECK DOWNLINE REQUIREMENTS FOR VIP LEVELS 4 THROUGH 10
       if (targetVipLevel >= 4 && targetVipLevel <= 10) {
         const [[{ active_l1_count }]] = await connection.query(`
           SELECT COUNT(DISTINCT u.id) AS active_l1_count 
@@ -70,20 +81,21 @@ function setDeviceRoutes(pool, authenticateToken) {
         }
       }
 
-      if (parseFloat(user.balance) < devicePrice) {
+      const userBalance = parseFloat(user.balance || 0);
+      if (userBalance < devicePrice) {
         await connection.rollback();
         return res.status(400).json({ success: false, message: 'Insufficient balance to purchase this device.' });
       }
 
-      // 3. Deduct balance from buyer and update VIP level if needed
+      // 4. Deduct balance safely using COALESCE and update VIP level if needed
       const newVipLevel = Math.max(buyerVipLevel, targetVipLevel);
-      await connection.query(`UPDATE users SET balance = ROUND(balance - ?, 2), vip_level = ? WHERE id = ?`, [devicePrice, newVipLevel, userId]);
+      await connection.query(`UPDATE users SET balance = ROUND(COALESCE(balance, 0) - ?, 2), vip_level = ? WHERE id = ?`, [devicePrice, newVipLevel, userId]);
       
-      // 4. Record device purchase
+      // 5. Record device purchase
       await connection.query(`INSERT INTO user_devices (user_id, device_id, status, created_at, last_yield_at) VALUES (?, ?, 'ACTIVE', NOW(), NOW())`, [userId, device_id]);
       await connection.query(`INSERT INTO transactions (user_id, type, category, amount, status) VALUES (?, 'withdrawal', 'vip_purchase', ?, 'approved')`, [userId, devicePrice]);
 
-      // 5. DISTRIBUTE INSTANT REFERRAL REBATES (Level 1: 10%, Level 2: 5%, Level 3: 3%)
+      // 6. DISTRIBUTE INSTANT REFERRAL REBATES (Level 1: 10%, Level 2: 5%, Level 3: 3%)
       if (user.l1_id) {
         // --- LEVEL 1 (10%) ---
         const [l1Users] = await connection.query(`SELECT id, vip_level, status, referred_by AS l2_id FROM users WHERE id = ? FOR UPDATE`, [user.l1_id]);
@@ -92,7 +104,7 @@ function setDeviceRoutes(pool, authenticateToken) {
           if (l1.vip_level >= buyerVipLevel) {
             const l1Bonus = Math.round((devicePrice * 0.10) * 100) / 100;
             if (l1Bonus > 0) {
-              await connection.query(`UPDATE users SET balance = ROUND(balance + ?, 2) WHERE id = ?`, [l1Bonus, l1.id]);
+              await connection.query(`UPDATE users SET balance = ROUND(COALESCE(balance, 0) + ?, 2) WHERE id = ?`, [l1Bonus, l1.id]);
               await connection.query(`INSERT INTO transactions (user_id, type, category, amount, status) VALUES (?, 'deposit', 'referral_rebate', ?, 'approved')`, [l1.id, l1Bonus]);
             }
           }
@@ -105,7 +117,7 @@ function setDeviceRoutes(pool, authenticateToken) {
               if (l2.vip_level >= buyerVipLevel) {
                 const l2Bonus = Math.round((devicePrice * 0.05) * 100) / 100;
                 if (l2Bonus > 0) {
-                  await connection.query(`UPDATE users SET balance = ROUND(balance + ?, 2) WHERE id = ?`, [l2Bonus, l2.id]);
+                  await connection.query(`UPDATE users SET balance = ROUND(COALESCE(balance, 0) + ?, 2) WHERE id = ?`, [l2Bonus, l2.id]);
                   await connection.query(`INSERT INTO transactions (user_id, type, category, amount, status) VALUES (?, 'deposit', 'referral_rebate', ?, 'approved')`, [l2.id, l2Bonus]);
                 }
               }
@@ -118,7 +130,7 @@ function setDeviceRoutes(pool, authenticateToken) {
                   if (l3.vip_level >= buyerVipLevel) {
                     const l3Bonus = Math.round((devicePrice * 0.03) * 100) / 100;
                     if (l3Bonus > 0) {
-                      await connection.query(`UPDATE users SET balance = ROUND(balance + ?, 2) WHERE id = ?`, [l3Bonus, l3.id]);
+                      await connection.query(`UPDATE users SET balance = ROUND(COALESCE(balance, 0) + ?, 2) WHERE id = ?`, [l3Bonus, l3.id]);
                       await connection.query(`INSERT INTO transactions (user_id, type, category, amount, status) VALUES (?, 'deposit', 'referral_rebate', ?, 'approved')`, [l3.id, l3Bonus]);
                     }
                   }
