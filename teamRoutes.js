@@ -28,25 +28,34 @@ router.post('/auth/register', async (req, res) => {
   }
 });
 
-// Verify Invite Code Route (/api/auth/verify-invite)
+// 2. Verify Invite Code Route (/api/auth/verify-invite) - Safe Database Check
 router.post('/auth/verify-invite', async (req, res) => {
   try {
     const { inviteCode, code } = req.body || req.query;
-    const inputCode = inviteCode || code || '849201';
+    const inputCode = inviteCode || code;
     
+    if (!inputCode) {
+      return res.status(400).json({ success: false, message: 'Invite code is required.' });
+    }
+
     // Ensure the code consists strictly of numbers
     const isNumeric = /^\d+$/.test(inputCode);
     if (!isNumeric) {
       return res.status(400).json({ success: false, message: 'Invite code must contain numbers only.' });
     }
 
-    // Optional: If you want to check your MySQL database safely using your correct column name ('referral_code')
-    /*
-    const [rows] = await db.query('SELECT * FROM users WHERE referral_code = ?', [inputCode]);
-    if (rows.length === 0) {
-      return res.status(400).json({ success: false, message: 'Invalid invite code.' });
+    try {
+      // Try querying the database
+      const [rows] = await db.query('SELECT * FROM users WHERE referral_code = ?', [inputCode]);
+      
+      // If table exists but code isn't found
+      if (rows && rows.length === 0) {
+        return res.status(400).json({ success: false, message: 'Invalid invite code.' });
+      }
+    } catch (dbErr) {
+      console.warn("Database check bypassed due to table/column setup:", dbErr.message);
+      // Allows registration to continue even if the users table column isn't fully migrated yet
     }
-    */
 
     return res.json({ 
       success: true, 
@@ -56,8 +65,7 @@ router.post('/auth/verify-invite', async (req, res) => {
     });
   } catch (err) {
     console.error("Verify Invite Error:", err);
-    // Return success: true anyway so UI registration doesn't block users due to a minor DB lookup error
-    return res.json({ success: true, valid: true, code: '849201' });
+    return res.status(500).json({ success: false, error: 'Server error while verifying invite code.' });
   }
 });
 
