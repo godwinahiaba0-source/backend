@@ -42,7 +42,47 @@ router.post('/auth/register', async (req, res) => {
   }
 });
 
-// 2. Verify Invite Code Route (/api/auth/verify-invite) - Safe Database Check
+// 2. User Login Route (/api/auth/login) - Checks MySQL and logs user in
+router.post('/auth/login', async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+
+    if (!phone || !password) {
+      return res.status(400).json({ success: false, message: 'Phone and password are required.' });
+    }
+
+    // Look up user by phone number in MySQL
+    const [rows] = await db.query('SELECT * FROM users WHERE phone = ?', [phone]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({ success: false, message: 'Invalid phone or password.' });
+    }
+
+    const user = rows[0];
+
+    // Check if password matches
+    if (user.password !== password) {
+      return res.status(400).json({ success: false, message: 'Invalid phone or password.' });
+    }
+
+    // Login successful
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        username: user.username,
+        phone: user.phone,
+        referral_code: user.referral_code
+      }
+    });
+
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ success: false, error: 'Server error during login' });
+  }
+});
+
+// 3. Verify Invite Code Route (/api/auth/verify-invite) - Safe Database Check
 router.post('/auth/verify-invite', async (req, res) => {
   try {
     const { inviteCode, code } = req.body || req.query;
@@ -82,7 +122,7 @@ router.post('/auth/verify-invite', async (req, res) => {
   }
 });
 
-// 3. Get Current User Profile Route (/api/auth/me)
+// 4. Get Current User Profile Route (/api/auth/me)
 router.get('/auth/me', async (req, res) => {
   try {
     const userData = req.user || {
@@ -96,7 +136,7 @@ router.get('/auth/me', async (req, res) => {
   }
 });
 
-// 4. Get Team Report Metrics Route (/api/team/report)
+// 5. Get Team Report Metrics Route (/api/team/report)
 router.get('/team/report', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
