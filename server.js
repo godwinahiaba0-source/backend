@@ -19,6 +19,7 @@ const withdrawalController = require('./withdrawalController')
 const initDeviceYieldCron = require('./deviceCron');
 const teamRoutes = require('./teamRoutes');
 const registerRoute = require('./register');
+const homeConfigRoutes = require('./homeConfig');
 const app = express();
 app.use(express.static(__dirname));
 const server = http.createServer(app);
@@ -81,6 +82,7 @@ app.use('/api', teamRoutes);
 app.use('/api/auth', registerRoute(pool));
 const loginRoute = require('./login')(pool); // Adjust path if needed
 app.use('/api/auth', loginRoute);
+app.use('/api', homeConfigRoutes(pool));
 const JWT_SECRET = process.env.JWT_SECRET || 'pepsi_vip_secret_key_12345';
 
 // Helper for UTC Date String (UTC+0)[cite: 5]
