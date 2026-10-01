@@ -18,7 +18,6 @@ const setDeviceRoutes = require('./deviceController');
 const withdrawalController = require('./withdrawalController')
 const initDeviceYieldCron = require('./deviceCron');
 const teamRoutes = require('./teamRoutes');
-const referralRoutes = require('./referral');
 const app = express();
 const server = http.createServer(app);
 
@@ -77,7 +76,6 @@ app.use('/api/team-commission', teamCommissionRoutes);
 const verifyInviteRoutes = require('./verifyInvite');
 app.use('/api/auth', verifyInviteRoutes(pool));
 app.use('/api', teamRoutes);
-app.use('/api/auth', referralRoutes(pool));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'pepsi_vip_secret_key_12345';
 
