@@ -75,6 +75,8 @@ const teamCommissionRoutes = require('./teamCommission');
 app.use('/api/team-commission', teamCommissionRoutes);
 const verifyInviteRoutes = require('./verifyInvite');
 app.use('/api/auth', verifyInviteRoutes(pool));
+const registerRoutes = require('./register');
+app.use('/api/auth', registerRoute(pool));
 app.use('/api', teamRoutes);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'pepsi_vip_secret_key_12345';
@@ -927,13 +929,13 @@ app.get('/api/accounting', authenticateToken, async (req, res) => {
           title = 'Device Purchase';
           break;
         case 'fund_investment':
-          title = 'Wealth Fund Deposit';
+          title = 'Wealth Fund Investment';
           break;
         case 'admin_credit':
           title = 'Rewards';
           break;
         case 'device_income':
-          title = 'Device income';
+          title = 'Device hourly Income';
           break;
         case 'referral_rebate':
           title = 'Referral Rebate';
