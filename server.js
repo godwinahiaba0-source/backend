@@ -18,6 +18,7 @@ const setDeviceRoutes = require('./deviceController');
 const withdrawalController = require('./withdrawalController')
 const initDeviceYieldCron = require('./deviceCron');
 const teamRoutes = require('./teamRoutes');
+const registerRoutes = require('./register');
 const app = express();
 const server = http.createServer(app);
 
@@ -75,7 +76,6 @@ const teamCommissionRoutes = require('./teamCommission');
 app.use('/api/team-commission', teamCommissionRoutes);
 const verifyInviteRoutes = require('./verifyInvite');
 app.use('/api/auth', verifyInviteRoutes(pool));
-const registerRoutes = require('./register');
 app.use('/api/auth', registerRoute(pool));
 app.use('/api', teamRoutes);
 
