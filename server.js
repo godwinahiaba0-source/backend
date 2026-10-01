@@ -18,7 +18,7 @@ const setDeviceRoutes = require('./deviceController');
 const withdrawalController = require('./withdrawalController')
 const initDeviceYieldCron = require('./deviceCron');
 const teamRoutes = require('./teamRoutes');
-const registerRoutes = require('./register');
+const registerRoute = require('./register');
 const app = express();
 const server = http.createServer(app);
 
