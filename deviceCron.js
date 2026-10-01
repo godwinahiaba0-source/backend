@@ -8,7 +8,19 @@ function initDeviceYieldCron(pool) {
     try {
       await connection.beginTransaction();
 
-      // 1. Process Device Yields & Commissions
+      // 1. Process LV0 Hourly Yield (Users without active devices, capped at 24 hours)
+      await connection.query(`
+        UPDATE users u
+        SET u.balance = ROUND(COALESCE(u.balance, 0) + 0.25, 2), 
+            u.lv0_hours_counted = u.lv0_hours_counted + 1
+        WHERE u.lv0_hours_counted < 24
+          AND NOT EXISTS (
+              SELECT 1 FROM user_devices ud 
+              WHERE ud.user_id = u.id AND ud.status = 'ACTIVE'
+          );
+      `);
+
+      // 2. Process Device Yields & Commissions
       const [activeDevices] = await connection.query(`
         SELECT 
           ud.id AS user_device_id,
@@ -115,7 +127,7 @@ function initDeviceYieldCron(pool) {
         console.log(`[CRON] Processed hourly yields & multi-level commissions for ${activeDevices.length} devices.`);
       }
 
-      // 2. Process Expired Wealth Fund Investments (Returns Capital + Profit to Balance)
+      // 3. Process Expired Wealth Fund Investments
       const [expiredInvestments] = await connection.query(`
         SELECT id, user_id, total_return 
         FROM user_investments 
@@ -127,32 +139,30 @@ function initDeviceYieldCron(pool) {
         for (const inv of expiredInvestments) {
           const returnAmount = parseFloat(inv.total_return);
 
-          // Credit user balance with total return (capital + profit)
           await connection.query(
             `UPDATE users SET balance = ROUND(balance + ?, 2) WHERE id = ?`,
             [returnAmount, inv.user_id]
           );
 
-          // Mark investment as completed
           await connection.query(
             `UPDATE user_investments SET status = 'completed' WHERE id = ?`,
             [inv.id]
           );
 
-          // Log transaction record for user history
           await connection.query(
             `INSERT INTO transactions (user_id, type, category, amount, status) 
              VALUES (?, 'deposit', 'fund_payout', ?, 'approved')`,
             [inv.user_id, returnAmount]
           );
         }
-        console.log(`[CRON] Processed ${expiredInvestments.length} expired wealth fund investments and credited user balances.`);
+        console.log(`[CRON] Processed ${expiredInvestments.length} expired wealth fund investments.`);
       }
 
       await connection.commit();
+      console.log('[CRON] LV0 yields and all cron tasks completed successfully.');
     } catch (err) {
       await connection.rollback();
-      console.error('[CRON ERROR] Yield or investment expiration processing failed:', err.message);
+      console.error('[CRON ERROR] Yield processing failed:', err.message);
     } finally {
       connection.release();
     }
