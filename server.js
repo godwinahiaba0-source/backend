@@ -20,6 +20,7 @@ const initDeviceYieldCron = require('./deviceCron');
 const teamRoutes = require('./teamRoutes');
 const registerRoute = require('./register');
 const app = express();
+app.use(express.static(__dirname));
 const server = http.createServer(app);
 
 // Initialize Socket.IO with CORS[cite: 5]
