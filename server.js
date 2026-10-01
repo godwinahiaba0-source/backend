@@ -79,6 +79,8 @@ const verifyInviteRoutes = require('./verifyInvite');
 app.use('/api/auth', verifyInviteRoutes(pool));
 app.use('/api', teamRoutes);
 app.use('/api/auth', registerRoute(pool));
+const loginRoute = require('./login')(pool); // Adjust path if needed
+app.use('/api/auth', loginRoute);
 const JWT_SECRET = process.env.JWT_SECRET || 'pepsi_vip_secret_key_12345';
 
 // Helper for UTC Date String (UTC+0)[cite: 5]
