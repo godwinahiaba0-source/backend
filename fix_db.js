@@ -49,7 +49,19 @@ async function runFix() {
       }
     }
 
-    // 1d. Fix withdrawals table created_at to DATETIME so it stores exact times instead of 00:00:00
+    // 1d. Ensure users table has phone column
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN phone VARCHAR(20) UNIQUE`);
+      console.log('✔ Added phone column to users table.');
+    } catch (e) {
+      if (e.code === 'ER_DUP_FIELDNAME') {
+        console.log('ℹ phone column already exists in users table.');
+      } else {
+        console.warn('Note on phone column modification:', e.message);
+      }
+    }
+
+    // 1e. Fix withdrawals table created_at to DATETIME so it stores exact times instead of 00:00:00
     try {
       await connection.query(`ALTER TABLE withdrawals MODIFY COLUMN created_at DATETIME`);
       console.log('✔ Successfully updated withdrawals.created_at to DATETIME.');
