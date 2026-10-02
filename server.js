@@ -586,7 +586,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid phone or password' });
     }
 
-    const token = jwt.sign({ id: user.id, phone: user.phone }, JWT_SECRET);
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '1d' });
 
     res.json({
       success: true,
