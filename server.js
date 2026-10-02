@@ -73,6 +73,8 @@ app.use('/api/devices', setDeviceRoutes(pool, authenticateToken));
 app.use('/api', withdrawalController(pool, authenticateToken, io));
 const teamCommissionRoutes = require('./teamCommission');
 app.use('/api/team-commission', teamCommissionRoutes);
+const verifyInviteRoutes = require('./verifyInvite');
+app.use('/api/auth', verifyInviteRoutes(pool));
 app.use('/api', teamRoutes);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'pepsi_vip_secret_key_12345';
@@ -586,7 +588,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid phone or password' });
     }
 
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.encode({ id: user.id, phone: user.phone }, JWT_SECRET);
 
     res.json({
       success: true,
