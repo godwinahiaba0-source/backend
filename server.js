@@ -46,7 +46,7 @@ const authenticateToken = (req, res, next) => {
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'))); // Serve uploaded screenshots publicly[cite: 5]
+app.use('/uploads', express.static(path.join(__dirname, 'pepsi-frontend'))); // Serve uploaded screenshots publicly[cite: 5]
 
 // Configure Multer Storage for Payment Proof Screenshots[cite: 5]
 const storage = multer.diskStorage({
